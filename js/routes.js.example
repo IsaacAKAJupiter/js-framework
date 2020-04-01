@@ -3,9 +3,7 @@ addRoutes([
     {
         path: '/',
         partial: 'home.html',
-        title: 'Home',
-        js: [],
-        css: []
+        title: 'Home'
     },
     {
         path: '/test/:id?',
@@ -22,8 +20,6 @@ addRoutes([
     {
         path: '/.*?',
         partial: '404.html',
-        title: '404 Not Found',
-        js: [],
-        css: []
+        title: '404 Not Found'
     }
 ]);
