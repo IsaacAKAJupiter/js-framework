@@ -1,3 +1,5 @@
+'use strict';
+
 // Create a holder object to store globals.
 window.myapp = {
     loading: false,
@@ -24,24 +26,23 @@ window.addEventListener('load', async () => {
 // Add listener to load change.
 window.addEventListener('myapp-load-change', e => {
     if (!e.detail.newValue && !e.detail.deactivate) {
-        if ('onActivate' in window) {
+        if ('onActivate' in window && window.onActivate) {
             window.onActivate();
         }
     }
 });
 
 async function loadPage(page) {
-    // If the page is allowed to leave.
-    if (window.myapp.currentRoute && window.myapp.currentRoute.deactivate) {
-        if (
-            window.myapp.currentRoute.deactivate in window &&
-            !(await Promise.resolve(
-                window[window.myapp.currentRoute.deactivate]()
-            ))
-        ) {
-            setLoading(false, true);
-            return false;
-        }
+    /* If there is a current route, if onDeactivate is in the window, if onDeactivate is not falsy
+    and if the result of the onDeactivate is false then deny loading the page. */
+    if (
+        window.myapp.currentRoute &&
+        'onDeactivate' in window &&
+        window.onDeactivate &&
+        !(await Promise.resolve(window.onDeactivate()))
+    ) {
+        setLoading(false, true);
+        return false;
     }
 
     // Set window loading for the app.
@@ -50,8 +51,13 @@ async function loadPage(page) {
     // Get the route.
     const route = getRoute(page);
 
+    // Set app globals for current page/remove onActivate.
     window.myapp.current = page;
     window.myapp.currentRoute = route;
+
+    // Remove onActivate and onDeactivate from window.
+    _removeFromWindow('onActivate');
+    _removeFromWindow('onDeactivate');
 
     // Set default title.
     document.title = route.title;
@@ -70,7 +76,7 @@ async function loadPage(page) {
     document.getElementById('myapp-main').innerHTML = html;
 
     // Override a tags.
-    overrideAllHref();
+    _overrideAllHref();
 
     // Reload script tags.
     tagsToRemove.push(...(await reloadTags('script', route.js)));
@@ -167,7 +173,7 @@ async function reloadTags(type, urls) {
     });
 }
 
-function overrideAllHref() {
+function _overrideAllHref() {
     // Get all the tags with my-href attribute.
     const hrefElements = document.querySelectorAll('[my-href]');
 
@@ -182,5 +188,18 @@ function overrideAllHref() {
 
             loadPage(href);
         };
+    }
+}
+
+function _removeFromWindow(name) {
+    // Check if in window.
+    if (name in window) {
+        try {
+            // Normal delete operator.
+            delete window[name];
+        } catch (_) {
+            // Catch for IE.
+            window[name] = undefined;
+        }
     }
 }

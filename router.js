@@ -1,18 +1,12 @@
+'use strict';
+
 function addRoutes(routes) {
     for (let i = 0; i < routes.length; i++) {
         addRoute(...Object.values(routes[i]));
     }
 }
 
-function addRoute(
-    route,
-    partial,
-    title,
-    js = [],
-    css = [],
-    preload = [],
-    deactivate = false
-) {
+function addRoute(route, partial, title, js = [], css = [], preload = []) {
     // Set the regex of the route.
     let regex;
     let variables;
@@ -35,7 +29,6 @@ function addRoute(
         js,
         css,
         preload,
-        deactivate,
         variables
     });
 }

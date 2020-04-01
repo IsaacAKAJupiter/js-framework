@@ -17,8 +17,7 @@ addRoutes([
             { name: 'fireMe' },
             { name: 'fireMe2' },
             { name: 'fireMe3', params: ['param1', 'param2'] }
-        ],
-        deactivate: 'onDeactivate'
+        ]
     },
     {
         path: '/.*?',
