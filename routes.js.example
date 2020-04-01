@@ -1,0 +1,30 @@
+// Add the routes.
+addRoutes([
+    {
+        path: '/',
+        partial: 'home.html',
+        title: 'Home',
+        js: [],
+        css: []
+    },
+    {
+        path: '/test/:id?',
+        partial: 'test.html',
+        title: 'Test',
+        js: ['js/test.js'],
+        css: ['css/test.css'],
+        preload: [
+            { name: 'fireMe' },
+            { name: 'fireMe2' },
+            { name: 'fireMe3', params: ['param1', 'param2'] }
+        ],
+        deactivate: 'onDeactivate'
+    },
+    {
+        path: '/.*?',
+        partial: '404.html',
+        title: '404 Not Found',
+        js: [],
+        css: []
+    }
+]);
