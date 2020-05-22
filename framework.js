@@ -7,7 +7,7 @@ const MYAPP_LOAD_STATES = {
     RELOADING_SCRIPTS: 'RELOADING_SCRIPTS',
     LOADING_HTML: 'LOADING_HTML',
     OVERRIDING_HREF: 'OVERRIDING_HREF',
-    PRELOADING_ROUTE: 'PRELOADING_ROUTE',
+    PRELOADING_ROUTE: 'PRELOADING_ROUTE'
 };
 
 // Create a holder object to store globals.
@@ -17,7 +17,7 @@ window.myapp = {
     currentRoute: null,
     routes: [],
     params: [],
-    loadStates: [],
+    loadStates: []
 };
 
 // Add event listener on the popstate.
@@ -135,8 +135,8 @@ async function loadPage(page) {
         tagsToRemove[i].baseElement.removeChild(tagsToRemove[i].element);
     }
 
+    window.scrollTo(0, 0);
     setLoading(false);
-
     return true;
 }
 
@@ -301,7 +301,7 @@ function addRoute(route, partial, title, js = [], css = [], preload = []) {
         js,
         css,
         preload,
-        variables,
+        variables
     });
 }
 
@@ -378,7 +378,7 @@ function _generateVariables(route) {
             variables.push({
                 index: i + 1,
                 name,
-                optional: routeParams[i][routeParams[i].length - 1] === '?',
+                optional: routeParams[i][routeParams[i].length - 1] === '?'
             });
         }
     }
@@ -434,7 +434,7 @@ function setLoading(value, deactivate = false) {
 
     // Create an event and dispatch it on the window.
     const event = new CustomEvent('myapp-load-change', {
-        detail: { newValue: value, oldValue, deactivate },
+        detail: { newValue: value, oldValue, deactivate }
     });
     window.dispatchEvent(event);
 }
