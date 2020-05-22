@@ -17,7 +17,10 @@ window.myapp = {
     currentRoute: null,
     routes: [],
     params: [],
-    loadStates: []
+    loadStates: [],
+    baseUrl: window.location.origin
+        ? window.location.origin + '/'
+        : window.location.protocol + '/' + window.location.host + '/'
 };
 
 // Add event listener on the popstate.
@@ -154,6 +157,9 @@ async function loadPage(page) {
  */
 async function _reloadTags(type, urls) {
     // Get all the old tags.
+    const fullUrls = urls.map((u) =>
+        u.includes('http') ? u : `${window.myapp.baseUrl}${u}`
+    );
     const tags = document.querySelectorAll(`[myapp-injected-${type}]`);
     const src = type === 'script' ? 'src' : 'href';
     const element = type === 'script' ? document.body : document.head;
@@ -162,7 +168,7 @@ async function _reloadTags(type, urls) {
 
     // Check if any of them are getting inserted again.
     for (let i = 0; i < tags.length; i++) {
-        if (urls.includes(tags[i][src])) {
+        if (fullUrls.includes(tags[i][src])) {
             duplicates.push(tags[i][src]);
         } else {
             toRemove.push(tags[i]);
@@ -198,8 +204,8 @@ async function _reloadTags(type, urls) {
 
     // Add all tags and get promise to resolve on load.
     let promises = [];
-    for (let i = 0; i < urls.length; i++) {
-        promises.push(load(urls[i]));
+    for (let i = 0; i < fullUrls.length; i++) {
+        promises.push(load(fullUrls[i]));
     }
 
     // Wait for all promises to finish.
