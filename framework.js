@@ -7,7 +7,7 @@ const MYAPP_LOAD_STATES = {
     RELOADING_SCRIPTS: 'RELOADING_SCRIPTS',
     LOADING_HTML: 'LOADING_HTML',
     OVERRIDING_HREF: 'OVERRIDING_HREF',
-    PRELOADING_ROUTE: 'PRELOADING_ROUTE'
+    PRELOADING_ROUTE: 'PRELOADING_ROUTE',
 };
 
 // Create a holder object to store globals.
@@ -17,7 +17,7 @@ window.myapp = {
     currentRoute: null,
     routes: [],
     params: [],
-    loadStates: []
+    loadStates: [],
 };
 
 // Add event listener on the popstate.
@@ -35,7 +35,7 @@ window.addEventListener('load', async () => {
 });
 
 // Add listener to load change.
-window.addEventListener('myapp-load-change', e => {
+window.addEventListener('myapp-load-change', (e) => {
     if (!e.detail.newValue && !e.detail.deactivate) {
         if ('onActivate' in window && window.onActivate) {
             window.onActivate();
@@ -88,13 +88,6 @@ async function loadPage(page) {
     // Reload Link tags.
     let tagsToRemove = await _reloadTags('link', route.css);
 
-    _fireLoadEvent(MYAPP_LOAD_STATES.LOADING_HTML);
-
-    // Fetch the partial.
-    const partial = await fetch(`partials/${route.partial}`);
-    const html = await partial.text();
-    document.getElementById('myapp-main').innerHTML = html;
-
     _fireLoadEvent(MYAPP_LOAD_STATES.OVERRIDING_HREF);
 
     // Override a tags.
@@ -135,6 +128,13 @@ async function loadPage(page) {
 
     await Promise.all(preloadPromises);
 
+    _fireLoadEvent(MYAPP_LOAD_STATES.LOADING_HTML);
+
+    // Fetch the partial.
+    const partial = await fetch(`partials/${route.partial}`);
+    const html = await partial.text();
+    document.getElementById('myapp-main').innerHTML = html;
+
     setLoading(false);
 
     return true;
@@ -170,7 +170,7 @@ async function _reloadTags(type, urls) {
     }
 
     // Function to return a promise to resolve on load.
-    const load = url => {
+    const load = (url) => {
         return new Promise((resolve, reject) => {
             // If duplicate.
             if (duplicates.includes(url)) {
@@ -206,7 +206,7 @@ async function _reloadTags(type, urls) {
     await Promise.all(promises);
 
     // Return the elements to remove.
-    return toRemove.map(remove => {
+    return toRemove.map((remove) => {
         return { element: remove, baseElement: element };
     });
 }
@@ -227,7 +227,7 @@ function _overrideAllHref() {
 
         hrefElements[i].setAttribute('href', href);
 
-        hrefElements[i].onclick = e => {
+        hrefElements[i].onclick = (e) => {
             e.preventDefault();
 
             loadPage(href);
@@ -301,7 +301,7 @@ function addRoute(route, partial, title, js = [], css = [], preload = []) {
         js,
         css,
         preload,
-        variables
+        variables,
     });
 }
 
@@ -378,7 +378,7 @@ function _generateVariables(route) {
             variables.push({
                 index: i + 1,
                 name,
-                optional: routeParams[i][routeParams[i].length - 1] === '?'
+                optional: routeParams[i][routeParams[i].length - 1] === '?',
             });
         }
     }
@@ -434,7 +434,7 @@ function setLoading(value, deactivate = false) {
 
     // Create an event and dispatch it on the window.
     const event = new CustomEvent('myapp-load-change', {
-        detail: { newValue: value, oldValue, deactivate }
+        detail: { newValue: value, oldValue, deactivate },
     });
     window.dispatchEvent(event);
 }
