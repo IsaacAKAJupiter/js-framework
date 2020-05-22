@@ -53,6 +53,9 @@ window.addEventListener('myapp-load-change', (e) => {
  * @returns {Promise<boolean>} A `Promise` containing a `boolean` determining if it successfully loaded the page.
  */
 async function loadPage(page) {
+    // If loading, just return false;
+    if (window.myapp.loading) return false;
+
     /* If there is a current route, if onDeactivate is in the window, if onDeactivate is not falsy
     and if the result of the onDeactivate is false then deny loading the page. */
     if (
@@ -89,7 +92,7 @@ async function loadPage(page) {
     _fireLoadEvent(MYAPP_LOAD_STATES.RELOADING_LINKS);
 
     // Reload Link tags.
-    let tagsToRemove = await _reloadTags('link', route.css);
+    window.myapp.removeTags = await _reloadTags('link', route.css);
 
     _fireLoadEvent(MYAPP_LOAD_STATES.OVERRIDING_HREF);
 
@@ -99,7 +102,7 @@ async function loadPage(page) {
     _fireLoadEvent(MYAPP_LOAD_STATES.RELOADING_SCRIPTS);
 
     // Reload script tags.
-    tagsToRemove.push(...(await _reloadTags('script', route.js)));
+    window.myapp.removeTags.push(...(await _reloadTags('script', route.js)));
 
     _fireLoadEvent(MYAPP_LOAD_STATES.PRELOADING_ROUTE);
 
@@ -134,8 +137,12 @@ async function loadPage(page) {
     document.getElementById('myapp-main').innerHTML = html;
 
     // Remove all the tags.
-    for (let i = 0; i < tagsToRemove.length; i++) {
-        tagsToRemove[i].baseElement.removeChild(tagsToRemove[i].element);
+    for (let i = 0; i < window.myapp.removeTags.length; i++) {
+        try {
+            window.myapp.removeTags[i].baseElement.removeChild(
+                window.myapp.removeTags[i].element
+            );
+        } catch (_) {}
     }
 
     window.scrollTo(0, 0);
@@ -157,33 +164,13 @@ async function loadPage(page) {
  */
 async function _reloadTags(type, urls) {
     // Get all the old tags.
-    const fullUrls = urls.map((u) =>
-        u.includes('http') ? u : `${window.myapp.baseUrl}${u}`
-    );
-    const tags = document.querySelectorAll(`[myapp-injected-${type}]`);
+    const tags = [...document.querySelectorAll(`[myapp-injected-${type}]`)];
     const src = type === 'script' ? 'src' : 'href';
     const element = type === 'script' ? document.body : document.head;
-    let duplicates = [];
-    let toRemove = [];
-
-    // Check if any of them are getting inserted again.
-    for (let i = 0; i < tags.length; i++) {
-        if (fullUrls.includes(tags[i][src])) {
-            duplicates.push(tags[i][src]);
-        } else {
-            toRemove.push(tags[i]);
-        }
-    }
 
     // Function to return a promise to resolve on load.
     const load = (url) => {
         return new Promise((resolve, reject) => {
-            // If duplicate.
-            if (duplicates.includes(url)) {
-                resolve();
-                return;
-            }
-
             // Insert based on type.
             if (type === 'script') {
                 const script = document.createElement('script');
@@ -204,15 +191,15 @@ async function _reloadTags(type, urls) {
 
     // Add all tags and get promise to resolve on load.
     let promises = [];
-    for (let i = 0; i < fullUrls.length; i++) {
-        promises.push(load(fullUrls[i]));
+    for (let i = 0; i < urls.length; i++) {
+        promises.push(load(urls[i]));
     }
 
     // Wait for all promises to finish.
     await Promise.all(promises);
 
     // Return the elements to remove.
-    return toRemove.map((remove) => {
+    return tags.map((remove) => {
         return { element: remove, baseElement: element };
     });
 }
