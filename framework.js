@@ -98,11 +98,6 @@ async function loadPage(page) {
     // Reload script tags.
     tagsToRemove.push(...(await _reloadTags('script', route.js)));
 
-    // Remove all the tags.
-    for (let i = 0; i < tagsToRemove.length; i++) {
-        tagsToRemove[i].baseElement.removeChild(tagsToRemove[i].element);
-    }
-
     _fireLoadEvent(MYAPP_LOAD_STATES.PRELOADING_ROUTE);
 
     // Check if they have preload functions.
@@ -134,6 +129,11 @@ async function loadPage(page) {
     const partial = await fetch(`partials/${route.partial}`);
     const html = await partial.text();
     document.getElementById('myapp-main').innerHTML = html;
+
+    // Remove all the tags.
+    for (let i = 0; i < tagsToRemove.length; i++) {
+        tagsToRemove[i].baseElement.removeChild(tagsToRemove[i].element);
+    }
 
     setLoading(false);
 
