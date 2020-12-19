@@ -7,7 +7,7 @@ const MYAPP_LOAD_STATES = {
     RELOADING_SCRIPTS: 'RELOADING_SCRIPTS',
     LOADING_HTML: 'LOADING_HTML',
     OVERRIDING_HREF: 'OVERRIDING_HREF',
-    PRELOADING_ROUTE: 'PRELOADING_ROUTE'
+    PRELOADING_ROUTE: 'PRELOADING_ROUTE',
 };
 
 // Create a holder object to store globals.
@@ -17,24 +17,23 @@ window.myapp = {
     currentRoute: null,
     routes: [],
     params: [],
+    query: {},
     loadStates: [],
     baseUrl: window.location.origin
         ? window.location.origin + '/'
-        : window.location.protocol + '/' + window.location.host + '/'
+        : window.location.protocol + '/' + window.location.host + '/',
 };
 
 // Add event listener on the popstate.
 window.addEventListener('popstate', () => {
     if (window.location.pathname !== window.myapp.current) {
-        loadPage(window.location.pathname);
+        loadPage(`${window.location.pathname}${window.location.search}`);
     }
 });
 
 // Add listener to load.
 window.addEventListener('load', async () => {
-    const path = window.location.pathname;
-
-    await loadPage(path);
+    await loadPage(`${window.location.pathname}${window.location.search}`);
 });
 
 // Add listener to load change.
@@ -72,6 +71,21 @@ async function loadPage(page) {
     setLoading(true);
     _fireLoadEvent(MYAPP_LOAD_STATES.FETCHING_ROUTE);
 
+    // Get the query params by looping through the regex matches.
+    const regex = /(?:\?|&|;)([^=|&|;]+)(?:=([^&|;]+))?/g;
+    let matches;
+    window.myapp.query = {};
+    while ((matches = regex.exec(page)) !== null) {
+        // This is necessary to avoid infinite loops with zero-width matches
+        if (matches.index === regex.lastIndex) regex.lastIndex++;
+
+        window.myapp.query[matches[1]] = matches[2] || '';
+    }
+
+    // Update the url without the query params.
+    const actualURL = page;
+    page = page.replace(regex, '');
+
     // Get the route.
     const route = getRoute(page);
 
@@ -87,7 +101,7 @@ async function loadPage(page) {
     document.title = route.title;
 
     // Push the state to the window history.
-    window.history.pushState('', route.title, page);
+    window.history.pushState('', route.title, actualURL);
 
     _fireLoadEvent(MYAPP_LOAD_STATES.RELOADING_LINKS);
 
@@ -294,7 +308,7 @@ function addRoute(route, partial, title, js = [], css = [], preload = []) {
         js,
         css,
         preload,
-        variables
+        variables,
     });
 }
 
@@ -371,7 +385,7 @@ function _generateVariables(route) {
             variables.push({
                 index: i + 1,
                 name,
-                optional: routeParams[i][routeParams[i].length - 1] === '?'
+                optional: routeParams[i][routeParams[i].length - 1] === '?',
             });
         }
     }
@@ -427,7 +441,7 @@ function setLoading(value, deactivate = false) {
 
     // Create an event and dispatch it on the window.
     const event = new CustomEvent('myapp-load-change', {
-        detail: { newValue: value, oldValue, deactivate }
+        detail: { newValue: value, oldValue, deactivate },
     });
     window.dispatchEvent(event);
 }
